@@ -4,8 +4,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.view.MotionEvent;
-import android.widget.SeekBar;
-import android.app.Activity;
 
 import java.util.ArrayList;
 
@@ -20,6 +18,7 @@ public class DrawCannon implements Animator {
     private int numTicks; // counts the number of logical clock ticks
     private Paint paint; //paint for the cannon ball
     private ArrayList<CannonBall> balls;
+    private boolean cannonExists = true;
     private int xSize;
     private int ySize;
 
@@ -32,6 +31,7 @@ public class DrawCannon implements Animator {
         paint = new Paint();
         paint.setColor(Color.BLACK);
         paint.setStyle(Paint.Style.FILL);
+        paint.setTextSize(50);
     }
 
     /**
@@ -95,16 +95,20 @@ public class DrawCannon implements Animator {
             }
             canvas.drawCircle(ballXPos+20, ySize-ballYPos-20, 20,paint);
             ball.updateCannonBall();
+
+            canvas.drawText("Balls on screen: "+balls.size(), 10,60,paint);
         }
     }
 
     public void onTouch(MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            float xLoc = event.getX(); //X location of user touch
-            float yLoc = ySize-event.getY(); //Y location of user touch
-            double mag = Math.sqrt(xLoc*xLoc + yLoc*yLoc);
+        if(cannonExists) {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                float xLoc = event.getX(); //X location of user touch
+                float yLoc = ySize - event.getY(); //Y location of user touch
+                double mag = Math.sqrt(xLoc * xLoc + yLoc * yLoc);
 
-            balls.add(new CannonBall(0, 0, 50*xLoc/mag,50*yLoc/mag));
+                balls.add(new CannonBall(0, 0, 50 * xLoc / mag, 50 * yLoc / mag));
+            }
         }
     }
 }
