@@ -1,8 +1,11 @@
 package edu.up.cs.schneidm17.cannonanimation;
 
+import android.annotation.TargetApi;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
+import android.os.Build;
 import android.view.MotionEvent;
 
 import java.util.ArrayList;
@@ -16,9 +19,19 @@ import java.util.ArrayList;
 public class DrawCannon implements Animator {
     //instance variables
     private int numTicks; // counts the number of logical clock ticks
-    private Paint paint; //paint for the cannon ball
+    private Paint black; //black for the cannon ball
+    private Paint gray; //gray for platform
+    private Paint red; //red for targets
+    private Paint white; //white for targets
+    private Path path; //path for cannon barrel
     private ArrayList<CannonBall> balls;
-    private boolean cannonExists = true;
+    private boolean cannonExists;
+    private float cannonXPos;
+    private float cannonYPos;
+    private float target1XPos;
+    private float target1YPos;
+    private float target2XPos;
+    private float target2YPos;
     private int xSize;
     private int ySize;
 
@@ -27,11 +40,24 @@ public class DrawCannon implements Animator {
      */
     public DrawCannon() {
         numTicks = 0;
+        cannonExists = true;
+        cannonXPos = (float)(1/Math.sqrt(2));
+        cannonYPos = (float)(1/Math.sqrt(2));
         balls = new ArrayList<>();
-        paint = new Paint();
-        paint.setColor(Color.BLACK);
-        paint.setStyle(Paint.Style.FILL);
-        paint.setTextSize(50);
+        path = new Path();
+        black = new Paint();
+        black.setColor(Color.BLACK);
+        black.setStyle(Paint.Style.FILL);
+        black.setTextSize(50);
+        gray = new Paint();
+        gray.setColor(0xff404040);
+        gray.setStyle(Paint.Style.FILL);
+        red = new Paint();
+        red.setColor(Color.RED);
+        red.setStyle(Paint.Style.FILL);
+        white= new Paint();
+        white.setColor(Color.WHITE);
+        white.setStyle(Paint.Style.FILL);
     }
 
     /**
@@ -76,11 +102,33 @@ public class DrawCannon implements Animator {
      *
      * @param canvas the graphics object on which to draw
      */
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public void tick(Canvas canvas) {
+        //update instance variables
         xSize = canvas.getWidth();
         ySize = canvas.getHeight();
         numTicks++;
+        target1XPos = 0.6f*xSize;
+        target1YPos = 0.4f*ySize+0.2f*ySize*(float)Math.sin(2*Math.toRadians(numTicks));
+        target2XPos = 0.8f*xSize;
+        target2YPos = 0.6f*ySize+0.2f*ySize*(float)Math.sin(3*Math.toRadians(numTicks));
 
+        //draw platform
+        canvas.drawRect(40, ySize - 80, 60, ySize, gray);
+        canvas.drawRect(100, ySize - 80, 120, ySize, gray);
+        canvas.drawRect(160, ySize - 80, 180, ySize, gray);
+        canvas.drawRect(220, ySize - 80, 240, ySize, gray);
+        canvas.drawRect(0, ySize - 100, 260, ySize - 80, gray);
+
+        //draw targets
+        canvas.drawOval(target1XPos-25, ySize-target1YPos-100, target1XPos+25, ySize-target1YPos+100,red);
+        canvas.drawOval(target1XPos-15, ySize-target1YPos-60,  target1XPos+15, ySize-target1YPos+60,white);
+        canvas.drawOval(target1XPos-5,  ySize-target1YPos-20,  target1XPos+5,  ySize-target1YPos+20,red);
+        canvas.drawOval(target2XPos-25, ySize-target2YPos-100, target2XPos+25, ySize-target2YPos+100,red);
+        canvas.drawOval(target2XPos-15, ySize-target2YPos-60,  target2XPos+15, ySize-target2YPos+60,white);
+        canvas.drawOval(target2XPos-5,  ySize-target2YPos-20,  target2XPos+5,  ySize-target2YPos+20,red);
+
+        //update and draw all cannon balls
         for(int i=0; i<balls.size(); i++) {
             CannonBall ball = balls.get(i);
             if(ball==null) {
@@ -88,26 +136,52 @@ public class DrawCannon implements Animator {
             }
             float ballXPos = ball.getXPos();
             float ballYPos = ball.getYPos();
-            if(ballXPos<0 || ballXPos>xSize) {
+            if(ballXPos<-40 || ballXPos>xSize) {
                 balls.remove(i);
                 i--;
                 continue;
-            }
-            canvas.drawCircle(ballXPos+20, ySize-ballYPos-20, 20,paint);
-            ball.updateCannonBall();
+            } else if (target1XPos-30 < ballXPos && ballXPos < target1XPos+10 &&
+                    target1YPos-120 < ballYPos && ballYPos < target1YPos+80) {
+                ball.hitTarget();
+            } else if (target2XPos-30 < ballXPos && ballXPos < target2XPos+10 &&
+                    target2YPos-120 < ballYPos && ballYPos < target2YPos+80) {
+                ball.hitTarget();
 
-            canvas.drawText("Balls on screen: "+balls.size(), 10,60,paint);
+            }
+
+            canvas.drawCircle(ballXPos + 20, ySize - ballYPos - 20, 20, black);
+            ball.updateCannonBall();
         }
+
+        //draw the cannon barrel (on top of balls that are fired)
+        canvas.drawArc(100, ySize - 140, 180, ySize - 60, 0, -180, true, gray);
+        path.reset();
+        path.moveTo(140 - 40 * cannonYPos, ySize - 100 - 40 * cannonXPos);
+        path.rLineTo(100 * cannonXPos, -100 * cannonYPos);
+        path.rLineTo(40 * cannonYPos, 40 * cannonXPos);
+        path.rLineTo(-100 * cannonXPos, 100 * cannonYPos);
+        path.close();
+        canvas.drawPath(path, gray);
+
+        //print text
+        if(balls.size()>0)
+            canvas.drawText("Balls on screen: " + balls.size(), 10,60, black);
+
     }
 
     public void onTouch(MotionEvent event) {
         if(cannonExists) {
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                float xLoc = event.getX(); //X location of user touch
-                float yLoc = ySize - event.getY(); //Y location of user touch
-                double mag = Math.sqrt(xLoc * xLoc + yLoc * yLoc);
+                if(event.getX() >= 260 || event.getY() <= (ySize-200))
+                {
+                    cannonXPos = event.getX() - 120 - 20 * cannonYPos; //X location of user touch
+                    cannonYPos = ySize - event.getY(); //Y location of user touch
+                    double mag = Math.sqrt(cannonXPos * cannonXPos + cannonYPos * cannonYPos);
+                    cannonXPos /= mag;
+                    cannonYPos /= mag;
+                }
 
-                balls.add(new CannonBall(0, 0, 50 * xLoc / mag, 50 * yLoc / mag));
+                balls.add(new CannonBall(120-20*cannonYPos+100*cannonXPos,80+20*cannonXPos+100*cannonYPos, 50 * cannonXPos, 50 * cannonYPos));
             }
         }
     }

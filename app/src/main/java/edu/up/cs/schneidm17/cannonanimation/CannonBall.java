@@ -44,7 +44,7 @@ public class CannonBall {
     }
 
     public void hitGround() {
-        yVel *= -0.7;
+        yVel *= -0.6;
         if(xVel<1 && xVel>=0)
             xVel=1;
         else if(xVel<0 && xVel>=-1)
@@ -52,6 +52,11 @@ public class CannonBall {
     }
 
     public void hitTarget() {
-        xVel *= -0.7;
+        xVel *= -0.2;
+        yVel *= 0.6;
+        if(xVel<0)
+            xPos -= 40;
+        else
+            xPos += 40;
     }
 }
