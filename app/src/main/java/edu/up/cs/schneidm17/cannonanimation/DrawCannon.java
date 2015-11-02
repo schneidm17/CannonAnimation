@@ -59,6 +59,9 @@ public class DrawCannon implements Animator {
     private SoundPool soundPool; //this allows sounds to play
     private int fire; //the sound file played when the cannon is fired
     private int hit; //the sound file played when the target is hit
+    //The "fire" sound was recorded by Mike Koenig and shared on SoundBible.com
+    //It is licenced with a Creative Commons 3.0 Licence, which means that I can use that sound
+    //in any context royalty-free on the sole condition that I give credit the original creator.
 
     /**
      * Initialize variables
