@@ -26,7 +26,7 @@ public class CannonMainActivity extends Activity {
         setContentView(R.layout.activity_cannon_main);
 
         // Create an animation canvas and place it in the main layout
-        Animator animator = new DrawCannon();
+        Animator animator = new DrawCannon(this);
         AnimationCanvas myCanvas = new AnimationCanvas(this, animator);
         LinearLayout mainLayout = (LinearLayout) this
                 .findViewById(R.id.topLevelLayout);

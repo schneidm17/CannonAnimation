@@ -5,6 +5,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.media.AudioManager;
+import android.media.SoundPool;
 import android.os.Build;
 import android.view.MotionEvent;
 
@@ -23,9 +25,11 @@ public class DrawCannon implements Animator {
     private Paint gray; //gray for platform
     private Paint red; //red for targets
     private Paint white; //white for targets
+    private Paint orange; //orange for cannon fire
     private Path path; //path for cannon barrel
     private ArrayList<CannonBall> balls;
     private boolean cannonExists;
+    private boolean cannonFired;
     private float cannonXPos;
     private float cannonYPos;
     private float target1XPos;
@@ -35,10 +39,14 @@ public class DrawCannon implements Animator {
     private int xSize;
     private int ySize;
 
+    private SoundPool soundPool;
+    private int fire;
+    private int hit;
+
     /**
      * Initialize variables
      */
-    public DrawCannon() {
+    public DrawCannon(CannonMainActivity activity) {
         numTicks = 0;
         cannonExists = true;
         cannonXPos = (float)(1/Math.sqrt(2));
@@ -55,9 +63,15 @@ public class DrawCannon implements Animator {
         red = new Paint();
         red.setColor(Color.RED);
         red.setStyle(Paint.Style.FILL);
-        white= new Paint();
+        white = new Paint();
         white.setColor(Color.WHITE);
         white.setStyle(Paint.Style.FILL);
+        orange = new Paint();
+        orange.setColor(0xffffaa00);
+        orange.setStyle(Paint.Style.FILL);
+        soundPool = new SoundPool(1, AudioManager.STREAM_MUSIC, 0);
+        fire = soundPool.load(activity,R.raw.fire, 1);
+        hit = soundPool.load(activity,R.raw.hit, 1);
     }
 
     /**
@@ -113,12 +127,26 @@ public class DrawCannon implements Animator {
         target2XPos = 0.8f*xSize;
         target2YPos = 0.6f*ySize+0.2f*ySize*(float)Math.sin(3*Math.toRadians(numTicks));
 
+        //draw explosion
+        if(cannonFired) {
+            canvas.drawCircle(140 - 20 * cannonYPos + 140 * cannonXPos, ySize - 100 - 20 * cannonXPos - 140 * cannonYPos, 50, orange);
+            soundPool.play(this.fire, 0.5f, 0.2f, 1, 0, 1.0f);
+            cannonFired=false;
+        }
+
         //draw platform
-        canvas.drawRect(40, ySize - 80, 60, ySize, gray);
-        canvas.drawRect(100, ySize - 80, 120, ySize, gray);
-        canvas.drawRect(160, ySize - 80, 180, ySize, gray);
-        canvas.drawRect(220, ySize - 80, 240, ySize, gray);
-        canvas.drawRect(0, ySize - 100, 260, ySize - 80, gray);
+        if(cannonExists) {
+            canvas.drawRect(40, ySize - 80, 60, ySize, gray);
+            canvas.drawRect(100, ySize - 80, 120, ySize, gray);
+            canvas.drawRect(160, ySize - 80, 180, ySize, gray);
+            canvas.drawRect(220, ySize - 80, 240, ySize, gray);
+            canvas.drawRect(0, ySize - 100, 260, ySize - 80, gray);
+        } else {
+            canvas.drawRect(40, ySize - 20, 60, ySize, gray);
+            canvas.drawRect(100, ySize - 20, 120, ySize, gray);
+            canvas.drawRect(160, ySize - 20, 180, ySize, gray);
+            canvas.drawRect(220, ySize - 20, 240, ySize, gray);
+        }
 
         //draw targets
         canvas.drawOval(target1XPos-25, ySize-target1YPos-100, target1XPos+25, ySize-target1YPos+100,red);
@@ -143,10 +171,17 @@ public class DrawCannon implements Animator {
             } else if (target1XPos-30 < ballXPos && ballXPos < target1XPos+10 &&
                     target1YPos-120 < ballYPos && ballYPos < target1YPos+80) {
                 ball.hitTarget();
+                soundPool.play(this.hit, 0.5f, 0, 1, 0, 1.0f);
             } else if (target2XPos-30 < ballXPos && ballXPos < target2XPos+10 &&
                     target2YPos-120 < ballYPos && ballYPos < target2YPos+80) {
                 ball.hitTarget();
-
+                soundPool.play(this.hit, 0, 0.5f, 1, 0, 1.0f);
+            } else if (cannonExists && ballXPos<260 && ball.getYVel()<0 && ballYPos<100 && ballYPos>60) {
+                cannonExists=false;
+                balls.remove(i);
+                canvas.drawPaint(orange);
+                soundPool.play(this.fire, 1, 1, 1, 0, 1.0f);
+                break;
             }
 
             canvas.drawCircle(ballXPos + 20, ySize - ballYPos - 20, 20, black);
@@ -154,19 +189,16 @@ public class DrawCannon implements Animator {
         }
 
         //draw the cannon barrel (on top of balls that are fired)
-        canvas.drawArc(100, ySize - 140, 180, ySize - 60, 0, -180, true, gray);
-        path.reset();
-        path.moveTo(140 - 40 * cannonYPos, ySize - 100 - 40 * cannonXPos);
-        path.rLineTo(100 * cannonXPos, -100 * cannonYPos);
-        path.rLineTo(40 * cannonYPos, 40 * cannonXPos);
-        path.rLineTo(-100 * cannonXPos, 100 * cannonYPos);
-        path.close();
-        canvas.drawPath(path, gray);
-
-        //print text
-        if(balls.size()>0)
-            canvas.drawText("Balls on screen: " + balls.size(), 10,60, black);
-
+        if(cannonExists) {
+            canvas.drawArc(100, ySize - 140, 180, ySize - 60, 0, -180, true, gray);
+            path.reset();
+            path.moveTo(140 - 40 * cannonYPos, ySize - 100 - 40 * cannonXPos);
+            path.rLineTo(100 * cannonXPos, -100 * cannonYPos);
+            path.rLineTo(40 * cannonYPos, 40 * cannonXPos);
+            path.rLineTo(-100 * cannonXPos, 100 * cannonYPos);
+            path.close();
+            canvas.drawPath(path, gray);
+        }
     }
 
     public void onTouch(MotionEvent event) {
@@ -182,6 +214,7 @@ public class DrawCannon implements Animator {
                 }
 
                 balls.add(new CannonBall(120-20*cannonYPos+100*cannonXPos,80+20*cannonXPos+100*cannonYPos, 50 * cannonXPos, 50 * cannonYPos));
+                cannonFired=true;
             }
         }
     }

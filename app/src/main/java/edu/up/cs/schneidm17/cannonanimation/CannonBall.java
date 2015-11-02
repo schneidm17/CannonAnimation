@@ -33,6 +33,14 @@ public class CannonBall {
         return (float)yPos;
     }
 
+    public double getXVel() {
+        return xVel;
+    }
+
+    public double getYVel() {
+        return yVel;
+    }
+
     public void updateCannonBall() {
         xPos += xVel + xWS;
         yVel += acceleration;
@@ -44,7 +52,7 @@ public class CannonBall {
     }
 
     public void hitGround() {
-        yVel *= -0.6;
+        yVel *= -0.5;
         if(xVel<1 && xVel>=0)
             xVel=1;
         else if(xVel<0 && xVel>=-1)
