@@ -22,7 +22,7 @@ import android.view.View.OnTouchListener;
 public class AnimationCanvas extends SurfaceView implements OnTouchListener{
 
     // instance variables
-    private Animator animator; // our aninimator
+    private Animator animator; // our animator
     private CannonThread cannonThread = null; // thread to generate ticks
     private Paint backgroundPaint = new Paint();
 
@@ -55,7 +55,7 @@ public class AnimationCanvas extends SurfaceView implements OnTouchListener{
 
         // Initialize the background color paint as instructed by the animator
         backgroundPaint.setColor(anim.backgroundColor());
-    }// ctor
+    }// constructor
 
     /**
      * Thread subclass to control the game loop
@@ -73,7 +73,7 @@ public class AnimationCanvas extends SurfaceView implements OnTouchListener{
         // controls animation stop/go based upon instructions from the Animator
         private boolean threadIsRunning = true;
 
-        /** ctor inits instance variables */
+        /** constructor initializes instance variables */
         public CannonThread(SurfaceHolder holder) {
             surfaceHolder = holder;
             setName("CannonThread");

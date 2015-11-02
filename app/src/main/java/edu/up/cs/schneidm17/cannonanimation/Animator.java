@@ -7,8 +7,9 @@ import android.view.MotionEvent;
  * An interface that defines an object that is capable of drawing an animation.
  * It is intended to be used with the AnimationCanvas class.
  *
- * @author Matthew Schneider
- * @version 2015-10-31
+ * @author Steve Vegdahl
+ * @author Andrew Nuxoll
+ * @version September 2012
  */
 
 public interface Animator {
